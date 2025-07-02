@@ -385,7 +385,7 @@ Result<void> Inode::truncate(u64 size) {
     
     if (size < attr_.size) {
         // 截断文件，需要释放超出部分的页面
-        offset_t start_page = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+        // offset_t start_page = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
         
         // 使对应页面失效
         g_page_cache.invalidate_pages(shared_from_this());

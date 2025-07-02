@@ -306,7 +306,7 @@ Result<size_t> FileBlockDevice::read(sector_t sector, void* buffer, size_t size)
     size_t actual_size = std::min(size, static_cast<size_t>(size_ - offset));
     
     // 定位并读取
-    if (lseek(fd_, offset, SEEK_SET) != offset) {
+    if (lseek(fd_, static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
         return ErrorCode::FS_EIO;
     }
     
@@ -337,7 +337,7 @@ Result<size_t> FileBlockDevice::write(sector_t sector, const void* buffer, size_
     size_t actual_size = std::min(size, static_cast<size_t>(size_ - offset));
     
     // 定位并写入
-    if (lseek(fd_, offset, SEEK_SET) != offset) {
+    if (lseek(fd_, static_cast<off_t>(offset), SEEK_SET) != static_cast<off_t>(offset)) {
         return ErrorCode::FS_EIO;
     }
     
@@ -359,7 +359,7 @@ Result<void> FileBlockDevice::flush() {
     return Result<void>();
 }
 
-Result<void> FileBlockDevice::trim(sector_t sector, size_t size) {
+Result<void> FileBlockDevice::trim(sector_t /* sector */, size_t /* size */) {
     // 文件设备暂不支持TRIM
     return Result<void>();
 }

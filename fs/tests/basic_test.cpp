@@ -144,10 +144,10 @@ void test_result_type() {
     test_runner.test_assert(success_result.unwrap() == 42, "成功结果值不正确");
     
     // 测试错误结果
-    Result<int> error_result(ErrorCode::ENOENT);
+    Result<int> error_result(ErrorCode::FS_ENOENT);
     test_runner.test_assert(!error_result.is_ok(), "错误结果不应该is_ok");
     test_runner.test_assert(error_result.is_err(), "错误结果应该is_err");
-    test_runner.test_assert(error_result.error() == ErrorCode::ENOENT, "错误码不正确");
+    test_runner.test_assert(error_result.error() == ErrorCode::FS_ENOENT, "错误码不正确");
     
     // 测试字符串结果
     Result<std::string> string_result(std::string("hello"));
@@ -281,7 +281,7 @@ void test_error_handling() {
     auto readonly_device = std::make_shared<MemoryBlockDevice>(1024, 512, 4096, true);
     auto write_result = readonly_device->write(0, buffer.data(), 512);
     test_runner.test_assert(write_result.is_err(), "只读设备写入应该失败");
-    test_runner.test_assert(write_result.error() == ErrorCode::EROFS, "应该返回只读错误");
+    test_runner.test_assert(write_result.error() == ErrorCode::FS_EROFS, "应该返回只读错误");
     
     test_runner.test_pass();
 }

@@ -51,7 +51,19 @@ struct FileMode {
     bool is_readable() const { return mode & 0400; }
     bool is_writable() const { return mode & 0200; }
     bool is_executable() const { return mode & 0100; }
-    FileType type() const { return static_cast<FileType>((mode >> 12) & 0xF); }
+    FileType type() const { 
+        u16 type_bits = (mode >> 12) & 0xF;
+        switch (type_bits) {
+            case 8: return FileType::REGULAR;   // S_IFREG >> 12 = 0100000 >> 12 = 8
+            case 4: return FileType::DIRECTORY; // S_IFDIR >> 12 = 0040000 >> 12 = 4  
+            case 10: return FileType::SYMLINK;  // S_IFLNK >> 12 = 0120000 >> 12 = 10
+            case 6: return FileType::BLOCK;     // S_IFBLK >> 12 = 0060000 >> 12 = 6
+            case 2: return FileType::CHAR;      // S_IFCHR >> 12 = 0020000 >> 12 = 2
+            case 1: return FileType::FIFO;      // S_IFIFO >> 12 = 0010000 >> 12 = 1
+            case 12: return FileType::SOCKET;   // S_IFSOCK >> 12 = 0140000 >> 12 = 12
+            default: return FileType::REGULAR;
+        }
+    }
 };
 
 // 错误码定义
