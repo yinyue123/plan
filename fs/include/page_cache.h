@@ -8,6 +8,7 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
+#include <memory>
 
 // 前向声明
 class PageCache;
@@ -24,7 +25,7 @@ enum class PageState : u8 {
 };
 
 // 页面结构
-class Page {
+class Page : public std::enable_shared_from_this<Page> {
 private:
     u8* data_;                          // 页面数据(4KB)
     offset_t offset_;                   // 页面在文件中的偏移量
@@ -130,10 +131,10 @@ private:
     void evict_pages(size_t count);
     void update_lru(SharedPtr<Page> page);
     void remove_from_lru(SharedPtr<Page> page);
-    void add_to_dirty_list(SharedPtr<Page> page);
-    void remove_from_dirty_list(SharedPtr<Page> page);
 
 public:
+    void add_to_dirty_list(SharedPtr<Page> page);
+    void remove_from_dirty_list(SharedPtr<Page> page);
     PageCache(size_t max_pages = 1024);  // 默认最大1024页(4MB)
     ~PageCache();
     

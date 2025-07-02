@@ -445,8 +445,7 @@ void demo_libc_interface() {
         
         // 目录遍历
         std::cout << "\n目录遍历演示:" << std::endl;
-        fs_libc::directory_iterator dir_iter("/tmp");
-        for (auto it = dir_iter; it != fs_libc::directory_iterator::end(); ++it) {
+        for (fs_libc::directory_iterator it("/tmp"); it != fs_libc::directory_iterator::end(); ++it) {
             std::cout << "  文件: " << it->d_name << std::endl;
         }
         

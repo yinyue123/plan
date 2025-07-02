@@ -149,7 +149,7 @@ Result<SharedPtr<Page>> PageCache::read_page(SharedPtr<Inode> inode, offset_t of
     // 查找或创建页面
     SharedPtr<Page> page = find_or_create_page(inode, offset);
     if (!page) {
-        return ErrorCode::ENOMEM;
+        return ErrorCode::FS_ENOMEM;
     }
     
     // 如果页面已是最新的，直接返回
@@ -170,7 +170,7 @@ Result<SharedPtr<Page>> PageCache::read_page(SharedPtr<Inode> inode, offset_t of
     auto block_device = inode->get_block_device();
     if (!block_device) {
         page->unlock();
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     // 计算扇区号(假设页面对齐到扇区边界)
@@ -246,7 +246,7 @@ Result<void> PageCache::sync_pages(SharedPtr<Inode> inode) {
         page->unlock();
     }
     
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 void PageCache::invalidate_pages(SharedPtr<Inode> inode) {

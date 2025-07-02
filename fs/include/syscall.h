@@ -177,17 +177,17 @@ public:
 inline int error_to_errno(ErrorCode err) {
     switch (err) {
         case ErrorCode::SUCCESS: return 0;
-        case ErrorCode::ENOENT: return ENOENT;
-        case ErrorCode::EIO: return EIO;
-        case ErrorCode::ENOMEM: return ENOMEM;
-        case ErrorCode::EACCES: return EACCES;
-        case ErrorCode::EEXIST: return EEXIST;
-        case ErrorCode::ENOTDIR: return ENOTDIR;
-        case ErrorCode::EISDIR: return EISDIR;
-        case ErrorCode::EINVAL: return EINVAL;
-        case ErrorCode::ENOSPC: return ENOSPC;
-        case ErrorCode::EROFS: return EROFS;
-        default: return EIO;
+        case ErrorCode::FS_ENOENT: return 2;     // ENOENT
+        case ErrorCode::FS_EIO: return 5;        // EIO
+        case ErrorCode::FS_ENOMEM: return 12;    // ENOMEM
+        case ErrorCode::FS_EACCES: return 13;    // EACCES
+        case ErrorCode::FS_EEXIST: return 17;    // EEXIST
+        case ErrorCode::FS_ENOTDIR: return 20;   // ENOTDIR
+        case ErrorCode::FS_EISDIR: return 21;    // EISDIR
+        case ErrorCode::FS_EINVAL: return 22;    // EINVAL
+        case ErrorCode::FS_ENOSPC: return 28;    // ENOSPC
+        case ErrorCode::FS_EROFS: return 30;     // EROFS
+        default: return 5;  // EIO
     }
 }
 

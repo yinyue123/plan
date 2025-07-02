@@ -25,7 +25,7 @@ SharedPtr<BlockDevice> Inode::get_block_device() const {
 
 Result<size_t> Inode::read(offset_t pos, void* buffer, size_t size) {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -72,14 +72,14 @@ Result<size_t> Inode::read(offset_t pos, void* buffer, size_t size) {
 
 Result<size_t> Inode::write(offset_t pos, const void* buffer, size_t size) {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
     
     // 检查写权限
     if (!attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     const u8* buf = static_cast<const u8*>(buffer);
@@ -94,7 +94,7 @@ Result<size_t> Inode::write(offset_t pos, const void* buffer, size_t size) {
         // 获取或创建页面
         SharedPtr<Page> page = g_page_cache.find_or_create_page(shared_from_this(), page_offset);
         if (!page) {
-            return ErrorCode::ENOMEM;
+            return ErrorCode::FS_ENOMEM;
         }
         
         // 如果是部分页面写入，需要先读取原数据
@@ -130,11 +130,11 @@ Result<size_t> Inode::write(offset_t pos, const void* buffer, size_t size) {
 
 Result<std::vector<DirentEntry>> Inode::readdir() {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -143,11 +143,11 @@ Result<std::vector<DirentEntry>> Inode::readdir() {
 
 Result<SharedPtr<Inode>> Inode::lookup(const std::string& name) {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -156,18 +156,18 @@ Result<SharedPtr<Inode>> Inode::lookup(const std::string& name) {
 
 Result<SharedPtr<Inode>> Inode::create(const std::string& name, FileMode mode) {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
     
     // 检查写权限
     if (!attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     auto result = ops_->create(shared_from_this(), name, mode);
@@ -181,18 +181,18 @@ Result<SharedPtr<Inode>> Inode::create(const std::string& name, FileMode mode) {
 
 Result<void> Inode::unlink(const std::string& name) {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
     
     // 检查写权限
     if (!attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     auto result = ops_->unlink(shared_from_this(), name);
@@ -206,18 +206,18 @@ Result<void> Inode::unlink(const std::string& name) {
 
 Result<void> Inode::mkdir(const std::string& name, FileMode mode) {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
     
     // 检查写权限
     if (!attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     auto result = ops_->mkdir(shared_from_this(), name, mode);
@@ -231,18 +231,18 @@ Result<void> Inode::mkdir(const std::string& name, FileMode mode) {
 
 Result<void> Inode::rmdir(const std::string& name) {
     if (!is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
     
     // 检查写权限
     if (!attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     auto result = ops_->rmdir(shared_from_this(), name);
@@ -257,11 +257,11 @@ Result<void> Inode::rmdir(const std::string& name) {
 Result<void> Inode::rename(const std::string& old_name, SharedPtr<Inode> new_dir, 
                           const std::string& new_name) {
     if (!is_dir() || !new_dir->is_dir()) {
-        return ErrorCode::ENOTDIR;
+        return ErrorCode::FS_ENOTDIR;
     }
     
     if (!ops_ || !new_dir->ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     // 锁定顺序：按inode号排序以避免死锁
@@ -279,7 +279,7 @@ Result<void> Inode::rename(const std::string& old_name, SharedPtr<Inode> new_dir
     
     // 检查权限
     if (!attr_.mode.is_writable() || !new_dir->attr_.mode.is_writable()) {
-        return ErrorCode::EACCES;
+        return ErrorCode::FS_EACCES;
     }
     
     auto result = ops_->rename(shared_from_this(), old_name, new_dir, new_name);
@@ -302,7 +302,7 @@ Result<void> Inode::setattr(const FileAttribute& attr) {
     std::lock_guard<std::mutex> lock(mutex_);
     
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     // 更新属性
@@ -315,7 +315,7 @@ Result<void> Inode::setattr(const FileAttribute& attr) {
 
 Result<std::string> Inode::getxattr(const std::string& name) {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -324,7 +324,7 @@ Result<std::string> Inode::getxattr(const std::string& name) {
 
 Result<void> Inode::setxattr(const std::string& name, const std::string& value) {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -339,7 +339,7 @@ Result<void> Inode::setxattr(const std::string& name, const std::string& value) 
 
 Result<std::vector<std::string>> Inode::listxattr() {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -348,7 +348,7 @@ Result<std::vector<std::string>> Inode::listxattr() {
 
 Result<void> Inode::removexattr(const std::string& name) {
     if (!ops_) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -373,14 +373,14 @@ Result<void> Inode::sync() {
         return sb_->get_ops()->write_inode(shared_from_this());
     }
     
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 Result<void> Inode::truncate(u64 size) {
     std::lock_guard<std::mutex> lock(mutex_);
     
     if (size == attr_.size) {
-        return Result<void>(ErrorCode::SUCCESS);
+        return Result<void>();
     }
     
     if (size < attr_.size) {
@@ -395,5 +395,5 @@ Result<void> Inode::truncate(u64 size) {
     attr_.size = size;
     attr_.mtime = attr_.ctime = std::chrono::system_clock::now();
     
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }

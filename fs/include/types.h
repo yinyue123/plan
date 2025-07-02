@@ -57,16 +57,16 @@ struct FileMode {
 // 错误码定义
 enum class ErrorCode : s32 {
     SUCCESS = 0,
-    ENOENT = -2,      // 文件或目录不存在
-    EIO = -5,         // I/O错误
-    ENOMEM = -12,     // 内存不足
-    EACCES = -13,     // 权限拒绝
-    EEXIST = -17,     // 文件已存在
-    ENOTDIR = -20,    // 不是目录
-    EISDIR = -21,     // 是目录
-    EINVAL = -22,     // 无效参数
-    ENOSPC = -28,     // 设备空间不足
-    EROFS = -30,      // 只读文件系统
+    FS_ENOENT = -2,      // 文件或目录不存在
+    FS_EIO = -5,         // I/O错误
+    FS_ENOMEM = -12,     // 内存不足
+    FS_EACCES = -13,     // 权限拒绝
+    FS_EEXIST = -17,     // 文件已存在
+    FS_ENOTDIR = -20,    // 不是目录
+    FS_EISDIR = -21,     // 是目录
+    FS_EINVAL = -22,     // 无效参数
+    FS_ENOSPC = -28,     // 设备空间不足
+    FS_EROFS = -30,      // 只读文件系统
 };
 
 // 结果类型模板
@@ -83,6 +83,56 @@ public:
     Result(const T& value) : value_(value), is_ok_(true) {}
     Result(T&& value) : value_(std::move(value)), is_ok_(true) {}
     Result(ErrorCode error) : error_(error), is_ok_(false) {}
+    
+    // Copy constructor
+    Result(const Result& other) : is_ok_(other.is_ok_) {
+        if (is_ok_) {
+            new (&value_) T(other.value_);
+        } else {
+            error_ = other.error_;
+        }
+    }
+    
+    // Move constructor
+    Result(Result&& other) noexcept : is_ok_(other.is_ok_) {
+        if (is_ok_) {
+            new (&value_) T(std::move(other.value_));
+        } else {
+            error_ = other.error_;
+        }
+    }
+    
+    // Copy assignment
+    Result& operator=(const Result& other) {
+        if (this != &other) {
+            if (is_ok_) {
+                value_.~T();
+            }
+            is_ok_ = other.is_ok_;
+            if (is_ok_) {
+                new (&value_) T(other.value_);
+            } else {
+                error_ = other.error_;
+            }
+        }
+        return *this;
+    }
+    
+    // Move assignment
+    Result& operator=(Result&& other) noexcept {
+        if (this != &other) {
+            if (is_ok_) {
+                value_.~T();
+            }
+            is_ok_ = other.is_ok_;
+            if (is_ok_) {
+                new (&value_) T(std::move(other.value_));
+            } else {
+                error_ = other.error_;
+            }
+        }
+        return *this;
+    }
     
     ~Result() {
         if (is_ok_) {
@@ -101,6 +151,54 @@ public:
     T& unwrap() {
         if (!is_ok_) throw std::runtime_error("unwrap failed");
         return value_;
+    }
+    
+    ErrorCode error() const {
+        if (is_ok_) throw std::runtime_error("no error");
+        return error_;
+    }
+};
+
+// Result<void> 特化
+template<>
+class Result<void> {
+private:
+    ErrorCode error_;
+    bool is_ok_;
+
+public:
+    Result() : is_ok_(true) {}
+    Result(ErrorCode error) : error_(error), is_ok_(false) {}
+    
+    // Copy constructor
+    Result(const Result& other) : error_(other.error_), is_ok_(other.is_ok_) {}
+    
+    // Move constructor
+    Result(Result&& other) noexcept : error_(other.error_), is_ok_(other.is_ok_) {}
+    
+    // Copy assignment
+    Result& operator=(const Result& other) {
+        if (this != &other) {
+            error_ = other.error_;
+            is_ok_ = other.is_ok_;
+        }
+        return *this;
+    }
+    
+    // Move assignment
+    Result& operator=(Result&& other) noexcept {
+        if (this != &other) {
+            error_ = other.error_;
+            is_ok_ = other.is_ok_;
+        }
+        return *this;
+    }
+    
+    bool is_ok() const { return is_ok_; }
+    bool is_err() const { return !is_ok_; }
+    
+    void unwrap() const {
+        if (!is_ok_) throw std::runtime_error("unwrap failed");
     }
     
     ErrorCode error() const {

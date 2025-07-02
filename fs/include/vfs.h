@@ -82,7 +82,7 @@ public:
 };
 
 // Inode类
-class Inode {
+class Inode : public std::enable_shared_from_this<Inode> {
 private:
     inode_t ino_;                       // inode号
     SharedPtr<SuperBlock> sb_;          // 所属超级块

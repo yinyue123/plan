@@ -57,11 +57,11 @@ Result<size_t> MemoryBlockDevice::read(sector_t sector, void* buffer, size_t siz
     
     // 检查边界
     if (offset >= data_.size()) {
-        return ErrorCode::EINVAL;
+        return ErrorCode::FS_EINVAL;
     }
     
     // 调整读取大小
-    size_t actual_size = std::min(size, data_.size() - offset);
+    size_t actual_size = std::min(size, static_cast<size_t>(data_.size() - offset));
     
     // 复制数据
     std::memcpy(buffer, data_.data() + offset, actual_size);
@@ -71,7 +71,7 @@ Result<size_t> MemoryBlockDevice::read(sector_t sector, void* buffer, size_t siz
 
 Result<size_t> MemoryBlockDevice::write(sector_t sector, const void* buffer, size_t size) {
     if (readonly_) {
-        return ErrorCode::EROFS;
+        return ErrorCode::FS_EROFS;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -81,11 +81,11 @@ Result<size_t> MemoryBlockDevice::write(sector_t sector, const void* buffer, siz
     
     // 检查边界
     if (offset >= data_.size()) {
-        return ErrorCode::EINVAL;
+        return ErrorCode::FS_EINVAL;
     }
     
     // 调整写入大小
-    size_t actual_size = std::min(size, data_.size() - offset);
+    size_t actual_size = std::min(size, static_cast<size_t>(data_.size() - offset));
     
     // 复制数据
     std::memcpy(data_.data() + offset, buffer, actual_size);
@@ -95,12 +95,12 @@ Result<size_t> MemoryBlockDevice::write(sector_t sector, const void* buffer, siz
 
 Result<void> MemoryBlockDevice::flush() {
     // 内存设备无需刷新
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 Result<void> MemoryBlockDevice::trim(sector_t sector, size_t size) {
     if (readonly_) {
-        return ErrorCode::EROFS;
+        return ErrorCode::FS_EROFS;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -110,14 +110,14 @@ Result<void> MemoryBlockDevice::trim(sector_t sector, size_t size) {
     
     // 检查边界
     if (offset >= data_.size()) {
-        return ErrorCode::EINVAL;
+        return ErrorCode::FS_EINVAL;
     }
     
     // 调整大小并清零
-    size_t actual_size = std::min(size, data_.size() - offset);
+    size_t actual_size = std::min(size, static_cast<size_t>(data_.size() - offset));
     std::memset(data_.data() + offset, 0, actual_size);
     
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 void MemoryBlockDevice::submit_bio(std::unique_ptr<Bio> bio) {
@@ -233,7 +233,7 @@ void MemoryBlockDevice::process_bio(std::unique_ptr<Bio> bio) {
             }
         }
     } catch (...) {
-        result = ErrorCode::EIO;
+        result = ErrorCode::FS_EIO;
     }
     
     // 调用完成回调
@@ -299,20 +299,20 @@ Result<size_t> FileBlockDevice::read(sector_t sector, void* buffer, size_t size)
     
     // 检查边界
     if (offset >= size_) {
-        return ErrorCode::EINVAL;
+        return ErrorCode::FS_EINVAL;
     }
     
     // 调整读取大小
-    size_t actual_size = std::min(size, size_ - offset);
+    size_t actual_size = std::min(size, static_cast<size_t>(size_ - offset));
     
     // 定位并读取
     if (lseek(fd_, offset, SEEK_SET) != offset) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     ssize_t bytes_read = ::read(fd_, buffer, actual_size);
     if (bytes_read < 0) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     return static_cast<size_t>(bytes_read);
@@ -320,7 +320,7 @@ Result<size_t> FileBlockDevice::read(sector_t sector, void* buffer, size_t size)
 
 Result<size_t> FileBlockDevice::write(sector_t sector, const void* buffer, size_t size) {
     if (readonly_) {
-        return ErrorCode::EROFS;
+        return ErrorCode::FS_EROFS;
     }
     
     std::lock_guard<std::mutex> lock(mutex_);
@@ -330,20 +330,20 @@ Result<size_t> FileBlockDevice::write(sector_t sector, const void* buffer, size_
     
     // 检查边界
     if (offset >= size_) {
-        return ErrorCode::EINVAL;
+        return ErrorCode::FS_EINVAL;
     }
     
     // 调整写入大小
-    size_t actual_size = std::min(size, size_ - offset);
+    size_t actual_size = std::min(size, static_cast<size_t>(size_ - offset));
     
     // 定位并写入
     if (lseek(fd_, offset, SEEK_SET) != offset) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     ssize_t bytes_written = ::write(fd_, buffer, actual_size);
     if (bytes_written < 0) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
     return static_cast<size_t>(bytes_written);
@@ -353,15 +353,15 @@ Result<void> FileBlockDevice::flush() {
     std::lock_guard<std::mutex> lock(mutex_);
     
     if (fsync(fd_) < 0) {
-        return ErrorCode::EIO;
+        return ErrorCode::FS_EIO;
     }
     
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 Result<void> FileBlockDevice::trim(sector_t sector, size_t size) {
     // 文件设备暂不支持TRIM
-    return Result<void>(ErrorCode::SUCCESS);
+    return Result<void>();
 }
 
 void FileBlockDevice::submit_bio(std::unique_ptr<Bio> bio) {
@@ -403,7 +403,7 @@ void FileBlockDevice::submit_bio(std::unique_ptr<Bio> bio) {
             }
         }
     } catch (...) {
-        result = ErrorCode::EIO;
+        result = ErrorCode::FS_EIO;
     }
     
     // 调用完成回调
