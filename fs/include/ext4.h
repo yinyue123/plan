@@ -331,7 +331,8 @@ struct Ext4DirEntry2 {
 } __attribute__((packed));
 
 // EXT4文件系统类
-class Ext4FileSystem : public FileSystem, public SuperBlockOperations, public InodeOperations {
+class Ext4FileSystem : public FileSystem, public SuperBlockOperations, public InodeOperations, 
+                      public std::enable_shared_from_this<Ext4FileSystem> {
 private:
     SharedPtr<SuperBlock> sb_;              // 超级块
     Ext4SuperBlock ext4_sb_;                // EXT4超级块数据
