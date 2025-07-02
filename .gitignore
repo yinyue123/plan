@@ -1,0 +1,19 @@
+# Build directories
+build/
+
+# Object files
+*.o
+
+# Static libraries
+*.a
+
+# Executables (binary files)
+# Common executable extensions
+*.exe
+*.out
+*.app
+
+# Dynamic libraries
+*.so
+*.dylib
+*.dll

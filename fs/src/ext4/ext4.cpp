@@ -223,34 +223,34 @@ Result<void> Ext4FileSystem::load_group_descriptors(SharedPtr<BlockDevice> devic
     return Result<void>();
 }
 
-Result<std::vector<u8>&> Ext4FileSystem::get_block_bitmap(u32 group) {
+Result<std::vector<u8>*> Ext4FileSystem::get_block_bitmap(u32 group) {
     std::lock_guard<std::mutex> lock(bitmap_mutex_);
     
     auto iter = block_bitmaps_.find(group);
     if (iter != block_bitmaps_.end()) {
-        return iter->second;
+        return &iter->second;
     }
     
     // 创建新的位图
     auto& bitmap = block_bitmaps_[group];
     bitmap.resize(block_size_, 0);
     
-    return bitmap;
+    return &bitmap;
 }
 
-Result<std::vector<u8>&> Ext4FileSystem::get_inode_bitmap(u32 group) {
+Result<std::vector<u8>*> Ext4FileSystem::get_inode_bitmap(u32 group) {
     std::lock_guard<std::mutex> lock(bitmap_mutex_);
     
     auto iter = inode_bitmaps_.find(group);
     if (iter != inode_bitmaps_.end()) {
-        return iter->second;
+        return &iter->second;
     }
     
     // 创建新的位图
     auto& bitmap = inode_bitmaps_[group];
     bitmap.resize(block_size_, 0);
     
-    return bitmap;
+    return &bitmap;
 }
 
 Result<block_t> Ext4FileSystem::alloc_block(u32 group) {

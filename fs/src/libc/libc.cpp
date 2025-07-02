@@ -2,6 +2,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <cstdlib>
+#include <sys/mman.h>
 
 // C接口实现（使用SystemCall）
 extern "C" {
@@ -11,7 +12,7 @@ int open(const char* pathname, int flags, ...) {
     if (flags & O_CREAT) {
         va_list args;
         va_start(args, flags);
-        mode = va_arg(args, mode_t);
+        mode = va_arg(args, int);
         va_end(args);
     }
     return SystemCall::sys_open(pathname, flags, mode);

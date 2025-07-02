@@ -5,12 +5,13 @@
 #include "vfs.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 
 // 文件描述符管理
 class FileDescriptorTable {
 private:
     std::vector<SharedPtr<File>> files_;    // 文件描述符表
-    std::mutex mutex_;                      // 保护并发访问
+    mutable std::mutex mutex_;              // 保护并发访问
     
 public:
     FileDescriptorTable(size_t size = 1024);

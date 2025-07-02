@@ -348,8 +348,8 @@ private:
     // 内部方法
     Result<void> load_super_block(SharedPtr<BlockDevice> device);
     Result<void> load_group_descriptors(SharedPtr<BlockDevice> device);
-    Result<std::vector<u8>&> get_block_bitmap(u32 group);
-    Result<std::vector<u8>&> get_inode_bitmap(u32 group);
+    Result<std::vector<u8>*> get_block_bitmap(u32 group);
+    Result<std::vector<u8>*> get_inode_bitmap(u32 group);
     Result<block_t> alloc_block(u32 group = 0);
     Result<void> free_block(block_t block);
     Result<inode_t> alloc_inode(u32 group = 0);
